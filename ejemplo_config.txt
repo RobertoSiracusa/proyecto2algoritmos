@@ -1,0 +1,82 @@
+# Ejemplo de configuración para Simulador de Red LAN
+# Este archivo demuestra el formato de configuración del simulador
+
+# Configuración de dispositivos
+hostname Router1
+device-type router
+
+# Interfaces del Router1
+interface g0/0
+  ip address 192.168.1.1
+  no shutdown
+exit
+
+interface g0/1
+  ip address 10.0.0.1
+  no shutdown
+exit
+
+interface g0/2
+  ip address 172.16.0.1
+  shutdown
+exit
+
+# Rutas del Router1
+ip route add 192.168.2.0 255.255.255.0 via 10.0.0.2 metric 10
+ip route add 172.16.1.0 255.255.255.0 via 192.168.1.2 metric 5
+ip route add 10.1.0.0 255.255.0.0 via 172.16.0.2 metric 15
+
+# Políticas del Router1
+policy set 192.168.3.0 255.255.255.0 block
+policy set 10.0.0.0 255.255.0.0 ttl-min 5
+
+hostname Switch1
+device-type switch
+
+interface g0/0
+  no shutdown
+exit
+
+interface g0/1
+  no shutdown
+exit
+
+interface g0/2
+  shutdown
+exit
+
+hostname PC1
+device-type host
+
+interface eth0
+  ip address 192.168.1.10
+  no shutdown
+exit
+
+hostname PC2
+device-type host
+
+interface eth0
+  ip address 192.168.1.20
+  no shutdown
+exit
+
+hostname PC3
+device-type host
+
+interface eth0
+  ip address 10.0.0.10
+  no shutdown
+exit
+
+# Conexiones entre dispositivos
+connect Router1 g0/0 PC1 eth0
+connect Router1 g0/0 Switch1 g0/0
+connect Switch1 g0/1 PC2 eth0
+connect Router1 g0/1 PC3 eth0
+
+# Comentarios adicionales
+# - Router1 actúa como gateway principal
+# - Switch1 conecta múltiples dispositivos
+# - PC1 y PC2 están en la misma subred
+# - PC3 está en una subred diferente
