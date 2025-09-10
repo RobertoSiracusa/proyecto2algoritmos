@@ -109,6 +109,24 @@ Router1(config)# exit                     # Volver a privilegiado
 Router1(config)# end                      # Volver a privilegiado
 ```
 
+#### Cómo Entrar a Cada Modo
+
+**Para llegar al modo Configuración de Interfaz, sigue estos pasos:**
+
+```bash
+# Paso 1: Modo Usuario → Modo Privilegiado
+Router1> enable
+Router1#
+
+# Paso 2: Modo Privilegiado → Modo Configuración
+Router1# configure terminal
+Router1(config)#
+
+# Paso 3: Modo Configuración → Modo Configuración de Interfaz
+Router1(config)# interface g0/0
+Router1(config-if)#
+```
+
 #### Modo Configuración de Interfaz
 ```
 Router1(config-if)# ip address 10.0.0.1 255.255.255.0  # Configurar IP
@@ -117,6 +135,10 @@ Router1(config-if)# shutdown                # Desactivar interfaz
 Router1(config-if)# exit                    # Volver a configuración
 Router1(config-if)# end                     # Volver a privilegiado
 ```
+
+**Interfaces disponibles en Router1:**
+- `g0/0` - Interfaz principal (ya configurada con IP 192.168.1.1)
+- `g0/1` - Interfaz adicional (sin configurar por defecto)
 
 ## 🔍 Estructuras de Datos Detalladas
 
@@ -838,6 +860,858 @@ proyecto2algoritmos/
 - ✅ **Información completa**: Timestamp, tipo, severidad y contexto
 - ✅ **Integración completa**: Funciona en todo el flujo de procesamiento
 - ✅ **Límite de memoria**: Previene consumo excesivo de recursos
+
+---
+
+## 📖 **Guía Completa: Comandos B-tree Detallados**
+
+### 🔄 `save snapshot <key>` - Guardar e Indexar Snapshot
+
+**Comando completo:**
+```bash
+Router1# save snapshot laboratorio
+Snapshot 'laboratorio' guardado en snapshots/laboratorio.cfg
+```
+
+**¿Qué hace internamente?**
+1. **Crea archivo de configuración**: Genera un archivo `.cfg` completo con:
+   - Configuración de todos los dispositivos
+   - Interfaces y direcciones IP
+   - Tabla de rutas completa
+   - Políticas de red configuradas
+   - Conexiones entre dispositivos
+
+2. **Indexa en B-tree**: Agrega entrada al árbol balanceado con:
+   - **Clave**: El `<key>` proporcionado (ej: "laboratorio")
+   - **Valor**: Ruta del archivo (ej: "snapshots/laboratorio.cfg")
+
+3. **Operación O(log n)**: La inserción en el B-tree es eficiente
+
+**Ejemplos de uso:**
+```bash
+# Nombres descriptivos
+Router1# save snapshot config_inicial
+Router1# save snapshot backup_seguridad
+Router1# save snapshot lab_redes_final
+
+# Con timestamps
+Router1# save snapshot 2024-01-15_14:30
+Router1# save snapshot backup_pre_examen
+
+# Versionado
+Router1# save snapshot v1.0_estable
+Router1# save snapshot v1.1_con_rutas
+```
+
+### 📥 `load config <key>` - Cargar Configuración desde B-tree
+
+**Comando completo:**
+```bash
+Router1# load config laboratorio
+Configuration loaded successfully.
+Devices and connections restored.
+```
+
+**¿Qué hace internamente?**
+1. **Búsqueda en B-tree**: Localiza la entrada usando búsqueda binaria O(log n)
+2. **Lectura del archivo**: Abre y parsea el archivo `.cfg` correspondiente
+3. **Restauración completa**: Reconstruye el estado del simulador:
+   - Vuelve a crear todos los dispositivos
+   - Reconfigura interfaces y IPs
+   - Restaura tabla de rutas
+   - Aplica políticas de red
+   - Restablece conexiones
+
+**Casos de uso prácticos:**
+```bash
+# Restaurar configuración anterior
+Router1# load config config_inicial
+
+# Recuperar de un error
+Router1# load config backup_seguridad
+
+# Cambiar entre escenarios de laboratorio
+Router1# load config lab_redes_final
+
+# Version control
+Router1# load config v1.0_estable
+```
+
+### 📋 `show snapshots` - Listar Snapshots Ordenados
+
+**Comando completo:**
+```bash
+Router1# show snapshots
+config_inicial -> snapshots/config_inicial.cfg
+laboratorio -> snapshots/laboratorio.cfg
+v1.0_estable -> snapshots/v1.0_estable.cfg
+```
+
+**¿Qué hace internamente?**
+1. **Recorrido in-order**: Recorre el B-tree en orden alfabético
+2. **Formato de salida**: Muestra clave → ruta_del_archivo
+3. **Vista de solo lectura**: No modifica el estado del simulador
+4. **Útil para recordar**: Ayuda a recordar nombres de snapshots guardados
+
+**Características:**
+- ✅ **Orden automático**: Siempre muestra en orden alfabético
+- ✅ **Rutas completas**: Incluye la ruta exacta del archivo
+- ✅ **Vista rápida**: Permite ver todos los snapshots sin cargarlos
+- ✅ **No destructivo**: No afecta el estado actual del simulador
+
+### 📊 `btree stats` - Estadísticas del Árbol B
+
+**Comando completo:**
+```bash
+Router1# show btree stats
+order=4 height=2 nodes=8 splits=3 merges=1
+```
+
+**¿Qué muestra?**
+- **`order`**: Orden del B-tree (máximo hijos por nodo)
+- **`height`**: Altura actual del árbol
+- **`nodes`**: Número total de nodos en el árbol
+- **`splits`**: Divisiones de nodos realizadas (crecimiento del árbol)
+- **`merges`**: Fusiones de nodos realizadas (optimización)
+
+**Interpretación de métricas:**
+
+```bash
+# Árbol pequeño y eficiente
+order=4 height=1 nodes=3 splits=0 merges=0
+# → Árbol nuevo, pocos snapshots, muy eficiente
+
+# Árbol mediano con crecimiento
+order=4 height=2 nodes=12 splits=5 merges=0
+# → Más snapshots, algunas divisiones, buen rendimiento
+
+# Árbol grande con optimizaciones
+order=4 height=3 nodes=25 splits=12 merges=3
+# → Muchos snapshots, algunas fusiones de optimización
+```
+
+### 🎯 **Flujo de Trabajo Completo:**
+
+```bash
+# 1. Iniciar y configurar
+python main.py
+Router1> enable
+Router1# configure terminal
+Router1(config)# ip route add 10.0.0.0 255.255.255.0 via 192.168.1.2
+Router1(config)# exit
+
+# 2. Guardar estado inicial
+Router1# save snapshot estado_inicial
+
+# 3. Ver qué snapshots tenemos
+Router1# show snapshots
+
+# 4. Hacer cambios experimentales
+Router1# configure terminal
+Router1(config)# ip route add 192.168.3.0 255.255.255.0 via 192.168.1.3
+Router1(config)# policy set 192.168.1.0 255.255.255.0 block
+Router1(config)# exit
+
+# 5. Ver estadísticas del B-tree
+Router1# show btree stats
+
+# 6. Guardar estado modificado
+Router1# save snapshot estado_modificado
+
+# 7. Ver snapshots disponibles
+Router1# show snapshots
+
+# 8. Restaurar estado original si es necesario
+Router1# load config estado_inicial
+```
+
+### 💡 **Consejos Avanzados:**
+
+#### **Estrategias de Nomenclatura:**
+```bash
+# Por fecha y hora
+Router1# save snapshot 2024-01-15_09:00_config_inicial
+Router1# save snapshot 2024-01-15_10:30_con_rutas
+Router1# save snapshot 2024-01-15_11:00_final
+
+# Por versión
+Router1# save snapshot v1.0_base
+Router1# save snapshot v1.1_rutas_agregadas
+Router1# save snapshot v1.2_politicas_aplicadas
+
+# Por propósito
+Router1# save snapshot lab1_ejercicio1
+Router1# save snapshot lab1_ejercicio2
+Router1# save snapshot examen_practico
+```
+
+#### **Gestión de Espacio:**
+```bash
+# Monitorear crecimiento del índice
+Router1# show btree stats
+
+# Si hay muchos snapshots, considerar limpieza periódica
+# Los archivos .cfg se acumulan en el directorio snapshots/
+```
+
+#### **Recuperación de Errores:**
+```bash
+# Si algo sale mal, siempre puedes restaurar
+Router1# show snapshots  # Ver qué backups tienes
+Router1# load config backup_seguridad  # Restaurar estado seguro
+```
+
+### 🚀 **Características Técnicas Avanzadas:**
+
+- **Persistencia**: Los snapshots sobreviven reinicios del simulador
+- **Atomicidad**: Las operaciones de guardar/cargar son atómicas
+- **Consistencia**: El B-tree mantiene siempre su estructura balanceada
+- **Escalabilidad**: Funciona eficientemente con cientos de snapshots
+- **Integridad**: Verificación automática de archivos de configuración
+
+---
+
+## 🌳 **Guía Completa: Comandos Trie - Políticas de Red Jerárquicas**
+
+### 🎯 `policy set <prefix> <mask> ttl-min <N>` - Establecer TTL Mínimo
+
+**Comando completo:**
+```bash
+Router1(config)# policy set 192.168.1.0 255.255.255.0 ttl-min 64
+Política TTL-min aplicada: 192.168.1.0/24 -> TTL >= 64
+```
+
+**¿Qué hace internamente?**
+1. **Valida la red**: Verifica que el prefix/mask formen una red válida
+2. **Inserta en Trie**: Agrega la política al árbol N-ario por prefijo IP
+3. **Aplicación jerárquica**: Se aplica a todas las IPs que coincidan con el prefijo
+4. **Verificación de paquetes**: Los paquetes con TTL < N serán descartados
+
+**Ejemplos de uso:**
+```bash
+# TTL mínimo para red interna
+Router1(config)# policy set 192.168.1.0 255.255.255.0 ttl-min 32
+
+# TTL mínimo para subred específica
+Router1(config)# policy set 10.0.5.0 255.255.255.0 ttl-min 128
+
+# TTL mínimo para red de servidores
+Router1(config)# policy set 192.168.100.0 255.255.255.0 ttl-min 64
+
+# TTL mínimo para toda una clase B
+Router1(config)# policy set 172.16.0.0 255.255.0.0 ttl-min 16
+```
+
+### 🚫 `policy set <prefix> <mask> block` - Establecer Política de Bloqueo
+
+**Comando completo:**
+```bash
+Router1(config)# policy set 10.0.0.0 255.255.0.0 block
+Política de bloqueo aplicada: 10.0.0.0/16 -> BLOQUEADO
+```
+
+**¿Qué hace internamente?**
+1. **Bloqueo total**: Cualquier paquete con IP destino en el prefijo será descartado
+2. **Prioridad máxima**: Las políticas de bloqueo tienen prioridad sobre otras políticas
+3. **Aplicación inmediata**: Los paquetes ya en cola serán verificados en el siguiente tick
+4. **Logging automático**: Se registra cada paquete bloqueado en el log de errores
+
+**Ejemplos de uso:**
+```bash
+# Bloquear red externa sospechosa
+Router1(config)# policy set 203.0.113.0 255.255.255.0 block
+
+# Bloquear subred de pruebas
+Router1(config)# policy set 192.168.99.0 255.255.255.0 block
+
+# Bloquear acceso a red administrativa desde externa
+Router1(config)# policy set 10.0.0.0 255.255.0.0 block
+
+# Bloquear tráfico de una red específica
+Router1(config)# policy set 172.16.5.0 255.255.255.0 block
+```
+
+### 🗑️ `policy unset <prefix> <mask>` - Eliminar Política
+
+**Comando completo:**
+```bash
+Router1(config)# policy unset 192.168.1.0 255.255.255.0
+Política eliminada para: 192.168.1.0/24
+```
+
+**¿Qué hace internamente?**
+1. **Búsqueda exacta**: Localiza el nodo exacto en el Trie
+2. **Eliminación selectiva**: Solo elimina la política específica, no afecta otras
+3. **Herencia intacta**: Las políticas padre/hijo permanecen activas
+4. **Aplicación inmediata**: Los cambios se reflejan en el siguiente procesamiento
+
+**Ejemplos de uso:**
+```bash
+# Eliminar política de TTL específica
+Router1(config)# policy unset 192.168.1.0 255.255.255.0
+
+# Quitar bloqueo de red
+Router1(config)# policy unset 10.0.0.0 255.255.0.0
+
+# Eliminar política de subred
+Router1(config)# policy unset 192.168.99.0 255.255.255.0
+
+# Remover restricción de red externa
+Router1(config)# policy unset 203.0.113.0 255.255.255.0
+```
+
+### 📊 `show ip prefix-tree` - Visualizar Árbol Trie Completo
+
+**Comando completo:**
+```bash
+Router1# show ip prefix-tree
+Trie de Prefijos IP:
+├── 0.0.0.0/0 (raíz)
+│   ├── 10.0.0.0/8
+│   │   ├── 10.0.0.0/16 -> BLOQUEADO
+│   │   └── 10.0.5.0/24 -> TTL >= 128
+│   ├── 172.16.0.0/12
+│   │   ├── 172.16.0.0/16 -> TTL >= 16
+│   │   └── 172.16.5.0/24 -> BLOQUEADO
+│   └── 192.168.0.0/16
+│       ├── 192.168.1.0/24 -> TTL >= 32
+│       ├── 192.168.100.0/24 -> TTL >= 64
+│       └── 192.168.99.0/24 -> BLOQUEADO
+```
+
+**¿Qué muestra?**
+- **Estructura jerárquica**: Representación visual del árbol N-ario
+- **Prefijos activos**: Todas las redes con políticas configuradas
+- **Tipo de política**: TTL-min o bloqueo para cada prefijo
+- **Máscara de red**: Longitud del prefijo (/8, /16, /24, etc.)
+- **Herencia visual**: Relaciones padre-hijo claramente mostradas
+
+### 🔍 **Funcionamiento Interno del Trie:**
+
+#### **Estructura del Árbol N-ario:**
+```
+Raíz (0.0.0.0/0)
+├── 10.*.*.* (10.0.0.0/8)
+│   ├── 10.0.*.* (10.0.0.0/16) -> BLOQUEADO
+│   └── 10.0.5.* (10.0.5.0/24) -> TTL >= 128
+├── 172.16.*.* (172.16.0.0/12)
+│   ├── 172.16.*.* (172.16.0.0/16) -> TTL >= 16
+│   └── 172.16.5.* (172.16.5.0/24) -> BLOQUEADO
+└── 192.168.*.* (192.168.0.0/16)
+    ├── 192.168.1.* (192.168.1.0/24) -> TTL >= 32
+    ├── 192.168.100.* (192.168.100.0/24) -> TTL >= 64
+    └── 192.168.99.* (192.168.99.0/24) -> BLOQUEADO
+```
+
+#### **Algoritmo de Búsqueda (Longest Prefix Match):**
+```python
+def buscar_politica(ip_destino):
+    # 1. Convertir IP a binario
+    # 2. Recorrer Trie desde la raíz
+    # 3. Tomar el camino más largo que coincida
+    # 4. Aplicar política encontrada (o ninguna si no hay match)
+    return politica_encontrada
+```
+
+### 🎯 **Flujo de Trabajo Completo con Políticas:**
+
+```bash
+# 1. Iniciar y configurar red básica
+python main.py
+Router1> enable
+Router1# configure terminal
+
+# 2. Establecer políticas de seguridad
+Router1(config)# policy set 10.0.0.0 255.0.0.0 block          # Bloquear clase A privada externa
+Router1(config)# policy set 192.168.0.0 255.255.0.0 ttl-min 32 # TTL mínimo para redes privadas
+Router1(config)# policy set 172.16.0.0 255.240.0.0 ttl-min 16  # TTL mínimo para DMZ
+
+# 3. Configurar rutas
+Router1(config)# ip route add 10.0.0.0 255.0.0.0 via 192.168.1.2
+Router1(config)# ip route add 172.16.0.0 255.240.0.0 via 192.168.1.3
+Router1(config)# exit
+
+# 4. Ver estructura del Trie
+Router1# show ip prefix-tree
+
+# 5. Probar políticas con paquetes
+Router1# ping 10.0.5.10      # Debería ser bloqueado
+Router1# ping 192.168.1.50   # Debería requerir TTL >= 32
+Router1# ping 172.16.5.100   # Debería requerir TTL >= 16
+
+# 6. Ajustar políticas según necesidad
+Router1# configure terminal
+Router1(config)# policy set 10.0.5.0 255.255.255.0 ttl-min 128   # Excepción específica
+Router1(config)# policy unset 192.168.0.0 255.255.0.0            # Remover política amplia
+Router1(config)# policy set 192.168.1.0 255.255.255.0 ttl-min 64 # Política más específica
+Router1(config)# exit
+
+# 7. Verificar cambios
+Router1# show ip prefix-tree
+```
+
+### 💡 **Consejos Avanzados para Políticas:**
+
+#### **Estrategias de Prefijos:**
+```bash
+# Políticas amplias (menos específicas)
+Router1(config)# policy set 192.168.0.0 255.255.0.0 ttl-min 32   # Toda 192.168.0.0/16
+Router1(config)# policy set 10.0.0.0 255.0.0.0 block             # Toda clase A
+
+# Políticas específicas (más prioritarias)
+Router1(config)# policy set 192.168.1.0 255.255.255.0 ttl-min 64  # Solo subred específica
+Router1(config)# policy set 10.0.5.0 255.255.255.0 block          # Solo subred específica
+
+# Excepciones mediante especificidad
+Router1(config)# policy set 192.168.0.0 255.255.0.0 block         # Bloquear toda la red
+Router1(config)# policy set 192.168.1.0 255.255.255.0 ttl-min 64  # Excepción para subred
+```
+
+#### **Gestión de Conflicto de Políticas:**
+```bash
+# El Trie resuelve conflictos automáticamente:
+# - Políticas más específicas tienen prioridad
+# - Longest Prefix Match determina qué política aplicar
+# - Bloqueo tiene prioridad sobre TTL-min
+```
+
+#### **Monitoreo de Políticas:**
+```bash
+# Ver todas las políticas activas
+Router1# show ip prefix-tree
+
+# Ver logs de aplicación de políticas
+Router1# show error-log
+
+# Ver estadísticas de aplicación
+Router1# show statistics
+```
+
+### 🚀 **Características Técnicas Avanzadas:**
+
+#### **Eficiencia del Trie:**
+- **Longest Prefix Match O(W)**: Donde W es la longitud de la IP (32 bits)
+- **Memoria optimizada**: Solo almacena nodos con políticas
+- **Búsqueda rápida**: Comparación bit a bit, no conversión de strings
+- **Escalabilidad**: Maneja miles de prefijos eficientemente
+
+#### **Jerarquía y Herencia:**
+```python
+# Ejemplo de jerarquía:
+# 192.168.0.0/16 (política general)
+# ├── 192.168.1.0/24 (política específica - tiene prioridad)
+# ├── 192.168.2.0/24 (hereda de /16)
+# └── 192.168.100.0/24 (política específica diferente)
+```
+
+#### **Integración con el Sistema:**
+- **Procesamiento de paquetes**: Políticas se verifican en cada tick
+- **Logging automático**: Cada aplicación de política se registra
+- **Interfaz unificada**: Funciona con todos los tipos de dispositivo
+- **Persistencia**: Políticas se guardan en snapshots del B-tree
+
+### ⚠️ **Consideraciones Importantes:**
+
+#### **Orden de Verificación:**
+1. **Política de bloqueo**: Si encuentra bloqueo, descarta inmediatamente
+2. **Política TTL-min**: Si encuentra TTL insuficiente, descarta
+3. **Tabla de rutas**: Si pasa políticas, continúa con enrutamiento normal
+4. **ARP/Encaminamiento**: Procesamiento normal si todo OK
+
+#### **Casos Especiales:**
+```bash
+# Política por defecto (0.0.0.0/0)
+Router1(config)# policy set 0.0.0.0 0.0.0.0 ttl-min 1  # TTL mínimo global
+
+# Políticas superpuestas
+Router1(config)# policy set 192.168.0.0 255.255.0.0 block        # Bloquear /16
+Router1(config)# policy set 192.168.1.0 255.255.255.0 ttl-min 64 # Excepción /24
+
+# Resultado: 192.168.1.0/24 tiene TTL-min, resto de 192.168.0.0/16 bloqueado
+```
+
+---
+
+## 📝 **Sistema de Registro de Errores - Error Logging**
+
+### 🎯 `show error-log` - Mostrar Todos los Errores
+
+**Comando completo:**
+```bash
+Router1# show error-log
+[2024-01-15 14:30:25] ERROR - PolicyViolation: Paquete bloqueado por política de red
+  Destino: 10.0.5.10, Origen: 192.168.1.100
+  Comando: ping 10.0.5.10, Política: 10.0.0.0/16 bloqueada
+
+[2024-01-15 14:30:30] ERROR - TTLExpired: Paquete descartado por TTL insuficiente
+  Destino: 192.168.2.50, Origen: 192.168.1.100
+  Comando: ping 192.168.2.50, TTL: 0
+
+[2024-01-15 14:30:35] ERROR - NoRouteToHost: No se encontró ruta para el destino
+  Destino: 203.0.113.5, Origen: 192.168.1.100
+  Comando: ping 203.0.113.5
+```
+
+### 📊 `show error-log [n]` - Mostrar Últimos N Errores
+
+**Comando completo:**
+```bash
+Router1# show error-log 3
+Mostrando los últimos 3 errores:
+
+[2024-01-15 14:35:20] ERROR - PolicyViolation: Paquete bloqueado por política TTL
+  Destino: 172.16.5.25, Origen: 192.168.1.100
+  Comando: ping 172.16.5.25, TTL requerido: 32, TTL actual: 30
+
+[2024-01-15 14:35:25] ERROR - InterfaceError: Error en interfaz de salida
+  Destino: 10.0.0.5, Origen: 192.168.1.100
+  Comando: ping 10.0.0.5, Interfaz: eth0, Estado: down
+
+[2024-01-15 14:35:30] WARNING - ARPTimeout: Timeout en resolución ARP
+  Destino: 192.168.1.200, Origen: 192.168.1.100
+  Comando: ping 192.168.1.200, Intentos: 3
+```
+
+**¿Qué muestra cada entrada?**
+- **Timestamp**: Fecha y hora exacta del evento
+- **Severidad**: ERROR, WARNING, INFO, DEBUG
+- **Tipo**: Categoría específica del error
+- **Mensaje**: Descripción detallada del problema
+- **Contexto**: Información adicional (IPs, comandos, valores, etc.)
+
+### 🔍 **Funcionamiento Interno del Sistema de Logging:**
+
+#### **Estructura de una Entrada de Log:**
+```python
+class ErrorEntry:
+    def __init__(self, timestamp, error_type, severity, message, command=None, context=None):
+        self.timestamp = timestamp          # Fecha y hora del evento
+        self.error_type = error_type        # Tipo de error (PolicyViolation, TTLExpired, etc.)
+        self.severity = severity           # Severidad (ERROR, WARNING, INFO, DEBUG)
+        self.message = message            # Mensaje descriptivo
+        self.command = command            # Comando que causó el error (opcional)
+        self.context = context            # Información adicional (opcional)
+```
+
+#### **Implementación con Queue (FIFO):**
+```python
+class ErrorLogger:
+    def __init__(self, max_size=1000):
+        self.log_queue = Queue()          # Cola FIFO para logs
+        self.max_size = max_size          # Tamaño máximo de la cola
+
+    def log_error(self, error_type, message, command=None, context=None):
+        # Crear entrada de log
+        entry = ErrorEntry(
+            timestamp=datetime.now(),
+            error_type=error_type,
+            severity=self._get_severity(error_type),
+            message=message,
+            command=command,
+            context=context
+        )
+
+        # Agregar a la cola
+        self.log_queue.enqueue(entry)
+
+        # Mantener tamaño máximo (eliminar más antiguos si es necesario)
+        if self.log_queue.size() > self.max_size:
+            self.log_queue.dequeue()
+```
+
+### 📋 **Tipos de Errores Disponibles:**
+
+#### **1. 🚫 PolicyViolation - Violación de Políticas**
+```bash
+# Ocurre cuando un paquete viola una política de red
+Ejemplos:
+- Paquete bloqueado por política de red
+- TTL insuficiente para política aplicada
+- Acceso denegado por regla de firewall
+```
+
+#### **2. ⏰ TTLExpired - TTL Agotado**
+```bash
+# Ocurre cuando un paquete llega con TTL = 0 o insuficiente
+Ejemplos:
+- Paquete descartado por TTL insuficiente
+- TTL mínimo requerido por política no cumplido
+- Bucle de enrutamiento detectado
+```
+
+#### **3. 🛣️ NoRouteToHost - Sin Ruta Disponible**
+```bash
+# Ocurre cuando no se encuentra ruta para el destino
+Ejemplos:
+- No se encontró ruta en tabla de enrutamiento
+- Red destino no alcanzable
+- Ruta por defecto no configurada
+```
+
+#### **4. 🔌 InterfaceError - Error de Interfaz**
+```bash
+# Ocurre cuando hay problemas con interfaces de red
+Ejemplos:
+- Interfaz en estado 'down'
+- Error en configuración de IP
+- Problema en conexión física
+```
+
+#### **5. 📡 ARPTimeout - Timeout en ARP**
+```bash
+# Ocurre cuando falla la resolución de direcciones MAC
+Ejemplos:
+- Timeout en consulta ARP
+- Dirección IP no encontrada en red local
+- Problema en tabla ARP
+```
+
+#### **6. ⚙️ CommandError - Error de Comando**
+```bash
+# Ocurre cuando hay errores en comandos CLI
+Ejemplos:
+- Comando desconocido
+- Sintaxis incorrecta
+- Parámetros inválidos
+- Permisos insuficientes
+```
+
+#### **7. 🔄 NetworkError - Error de Red General**
+```bash
+# Ocurre en errores generales de red
+Ejemplos:
+- Problema de conectividad
+- Error en procesamiento de paquetes
+- Problema en configuración de red
+```
+
+### 🎯 **Flujo de Procesamiento con Logging:**
+
+#### **Procesamiento de Paquetes con Logging Integrado:**
+```python
+def process_packet(self, packet):
+    try:
+        # 1. Verificar políticas (Trie)
+        prefix_match, policy = self.policy_trie.search_longest_prefix(packet.destination_ip)
+
+        if policy:
+            if policy.get('block'):
+                self.error_logger.log_error(
+                    'PolicyViolation',
+                    f'Paquete bloqueado por política de red',
+                    context={
+                        'source': packet.source_ip,
+                        'destination': packet.destination_ip,
+                        'policy': f"{prefix_match} bloqueada"
+                    }
+                )
+                return  # Descartar paquete
+
+            if policy.get('ttl_min') and packet.ttl < policy['ttl_min']:
+                self.error_logger.log_error(
+                    'TTLExpired',
+                    f'TTL insuficiente para política aplicada',
+                    context={
+                        'source': packet.source_ip,
+                        'destination': packet.destination_ip,
+                        'ttl_required': policy['ttl_min'],
+                        'ttl_actual': packet.ttl
+                    }
+                )
+                return  # Descartar paquete
+
+        # 2. Buscar ruta (AVL Tree)
+        route = self.routing_table.search_key(packet.destination_ip)
+        if not route:
+            self.error_logger.log_error(
+                'NoRouteToHost',
+                f'No se encontró ruta para el destino',
+                context={
+                    'source': packet.source_ip,
+                    'destination': packet.destination_ip
+                }
+            )
+            return  # Descartar paquete
+
+        # 3. Verificar interfaz de salida
+        output_interface = self.interfaces.get(route.next_hop)
+        if not output_interface or not output_interface.status == 'up':
+            self.error_logger.log_error(
+                'InterfaceError',
+                f'Error en interfaz de salida',
+                context={
+                    'source': packet.source_ip,
+                    'destination': packet.destination_ip,
+                    'interface': output_interface.name if output_interface else 'unknown',
+                    'status': output_interface.status if output_interface else 'not found'
+                }
+            )
+            return  # Descartar paquete
+
+        # 4. Procesar ARP si es necesario
+        if not self.arp_table.get(packet.destination_ip):
+            arp_success = self._resolve_arp(packet.destination_ip)
+            if not arp_success:
+                self.error_logger.log_error(
+                    'ARPTimeout',
+                    f'Timeout en resolución ARP',
+                    context={
+                        'source': packet.source_ip,
+                        'destination': packet.destination_ip,
+                        'attempts': 3
+                    }
+                )
+                return  # Descartar paquete
+
+        # 5. Decrementar TTL y enviar
+        packet.ttl -= 1
+        if packet.ttl <= 0:
+            self.error_logger.log_error(
+                'TTLExpired',
+                f'Paquete descartado por TTL agotado',
+                context={
+                    'source': packet.source_ip,
+                    'destination': packet.destination_ip,
+                    'final_ttl': packet.ttl
+                }
+            )
+            return  # Descartar paquete
+
+        # Paquete enviado exitosamente
+        self._send_packet(packet, output_interface)
+
+    except Exception as e:
+        self.error_logger.log_error(
+            'NetworkError',
+            f'Error general en procesamiento de paquete: {str(e)}',
+            context={
+                'source': packet.source_ip,
+                'destination': packet.destination_ip,
+                'exception': str(e)
+            }
+        )
+```
+
+### 📈 **Estadísticas y Monitoreo de Errores:**
+
+#### **Comando Adicional: `show error-counts`**
+```bash
+Router1# show error-counts
+Estadísticas de Errores (últimas 24 horas):
+
+PolicyViolation: 15 (42%)
+TTLExpired: 8 (22%)
+NoRouteToHost: 5 (14%)
+InterfaceError: 3 (8%)
+ARPTimeout: 3 (8%)
+CommandError: 2 (6%)
+
+Total de errores: 36
+Promedio por hora: 1.5
+```
+
+### 🎯 **Flujo de Trabajo Completo con Logging:**
+
+```bash
+# 1. Iniciar simulador y configurar red
+python main.py
+Router1> enable
+Router1# configure terminal
+
+# 2. Configurar políticas que generarán logs
+Router1(config)# policy set 10.0.0.0 255.0.0.0 block
+Router1(config)# policy set 192.168.0.0 255.255.0.0 ttl-min 32
+Router1(config)# exit
+
+# 3. Generar algunos errores para ver logs
+Router1# ping 10.0.5.10      # Generará PolicyViolation
+Router1# ping 192.168.2.50   # Generará TTLExpired (si TTL < 32)
+Router1# ping 203.0.113.5    # Generará NoRouteToHost
+
+# 4. Ver todos los errores
+Router1# show error-log
+
+# 5. Ver solo los últimos 5 errores
+Router1# show error-log 5
+
+# 6. Ver estadísticas de errores
+Router1# show error-counts
+
+# 7. Limpiar logs si es necesario (comando hipotético)
+Router1# clear error-log
+```
+
+### 💡 **Consejos para Uso del Sistema de Logging:**
+
+#### **Interpretación de Logs:**
+```bash
+# PolicyViolation frecuente -> Revisar políticas de seguridad
+# TTLExpired frecuente -> Problemas de enrutamiento o bucles
+# NoRouteToHost frecuente -> Falta configuración de rutas
+# InterfaceError frecuente -> Problemas de conectividad física
+# ARPTimeout frecuente -> Problemas en red local
+```
+
+#### **Diagnóstico de Problemas:**
+```bash
+# 1. Ver logs recientes
+Router1# show error-log 10
+
+# 2. Identificar patrón de errores
+# 3. Revisar configuración según el tipo de error
+# 4. Corregir configuración
+# 5. Verificar que los errores disminuyan
+```
+
+#### **Mantenimiento de Logs:**
+- **Rotación automática**: Los logs más antiguos se eliminan automáticamente
+- **Límite de memoria**: Máximo 1000 entradas por defecto
+- **Persistencia**: Los logs se pierden al reiniciar (por diseño)
+- **Filtrado**: Se pueden mostrar solo los más recientes con `[n]`
+
+### 🚀 **Características Técnicas Avanzadas:**
+
+#### **Eficiencia del Sistema:**
+- **Queue FIFO**: Estructura O(1) para inserción y eliminación
+- **Memoria limitada**: Previene consumo excesivo de recursos
+- **Thread-safe**: Funciona correctamente en entornos multi-hilo
+- **Timestamp preciso**: Registra microsegundos para orden correcto
+
+#### **Integración Completa:**
+- **Con políticas Trie**: Logs cuando se violan políticas
+- **Con tabla AVL**: Logs cuando no se encuentra ruta
+- **Con procesamiento de paquetes**: Logs en cada paso crítico
+- **Con CLI**: Logs de errores de comandos
+- **Con snapshots**: Logs se incluyen en backups
+
+#### **Severidades Disponibles:**
+- **ERROR**: Problemas críticos que impiden funcionamiento
+- **WARNING**: Problemas que requieren atención pero no críticos
+- **INFO**: Información útil sobre operaciones normales
+- **DEBUG**: Detalles técnicos para troubleshooting avanzado
+
+### ⚠️ **Consideraciones Importantes:**
+
+#### **Límite de Memoria:**
+```python
+# Por defecto: máximo 1000 entradas
+# Los logs más antiguos se eliminan automáticamente
+# Se puede configurar en el constructor de ErrorLogger
+```
+
+#### **Persistencia:**
+```python
+# Los logs NO se guardan en snapshots
+# Se pierden al reiniciar el simulador
+# Esto es por diseño para evitar archivos de log muy grandes
+```
+
+#### **Rendimiento:**
+```python
+# Operaciones O(1) para logging
+# No afecta rendimiento del procesamiento de paquetes
+# Logging asíncrono (no bloquea procesamiento principal)
+```
 
 ---
 

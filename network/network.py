@@ -15,12 +15,12 @@ class Network:
         self.snapshots = BTree()  # B-Tree para snapshots de configuración
         self.current_device = None  # Dispositivo actual en la sesión CLI
 
-    def add_device(self, name, device_type="router"):
+    def add_device(self, name, device_type="router", error_logger=None):
         """Agrega un nuevo dispositivo a la red"""
         if name in self.devices:
             return False
 
-        device = Device(name, device_type)
+        device = Device(name, device_type, error_logger)
         self.devices[name] = device
 
         # Agregar interfaces por defecto según el tipo
